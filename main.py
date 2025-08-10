@@ -13,51 +13,48 @@ from kivy.metrics import dp, sp
 from kivy.config import Config
 from kivy.utils import get_color_from_hex
 from datetime import datetime, date
-import json
 import calendar
+from expensy_client import ExpensyClient
 
 # Color palette - Dark modern theme
 COLORS = {
-    'background': get_color_from_hex('#1a1a1a'),
-    'card_background': get_color_from_hex('#2d2d2d'),
-    'input_background': get_color_from_hex('#404040'),
-    'primary': get_color_from_hex('#6366f1'),
-    'success': get_color_from_hex('#10b981'),
-    'danger': get_color_from_hex('#ef4444'),
-    'warning': get_color_from_hex('#f59e0b'),
-    'text_primary': get_color_from_hex('#ffffff'),
-    'text_secondary': get_color_from_hex('#9ca3af'),
-    'border': get_color_from_hex('#4b5563'),
-    'accent': get_color_from_hex('#8b5cf6')
+    "background": get_color_from_hex("#1a1a1a"),
+    "card_background": get_color_from_hex("#2d2d2d"),
+    "input_background": get_color_from_hex("#404040"),
+    "primary": get_color_from_hex("#6366f1"),
+    "success": get_color_from_hex("#10b981"),
+    "danger": get_color_from_hex("#ef4444"),
+    "warning": get_color_from_hex("#f59e0b"),
+    "text_primary": get_color_from_hex("#ffffff"),
+    "text_secondary": get_color_from_hex("#9ca3af"),
+    "border": get_color_from_hex("#4b5563"),
+    "accent": get_color_from_hex("#8b5cf6"),
 }
 
 # Categorías como constantes
-CATEGORIES = [
-    "Hogar",
-    "Comidas y bebidas",
-    "Salud y cuidado personal",
-    "Supermercado"
-]
+CATEGORIES = ["Hogar", "Comidas y bebidas", "Salud y cuidado personal", "Supermercado"]
+
+# Fuente de los datos
+SOURCE_FIELD = "ingreso manual"
 
 # Configuración para dispositivos móviles
-Config.set('graphics', 'width', '375')
-Config.set('graphics', 'height', '667')
-Config.set('graphics', 'resizable', False)
-Config.set('graphics', 'clear_color', '#1a1a1a')
+Config.set("graphics", "width", "375")
+Config.set("graphics", "height", "667")
+Config.set("graphics", "resizable", False)
+Config.set("graphics", "clear_color", "#1a1a1a")
 
 
 class ModernCard(BoxLayout):
     """Card container with modern styling"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
         self.padding = dp(20)
         self.spacing = dp(15)
 
         with self.canvas.before:
-            Color(*COLORS['card_background'])
-            self.rect = RoundedRectangle(
-                pos=self.pos, size=self.size, radius=[dp(12)]
-            )
+            Color(*COLORS["card_background"])
+            self.rect = RoundedRectangle(pos=self.pos, size=self.size, radius=[dp(12)])
 
         self.bind(pos=self.update_rect, size=self.update_rect)
 
@@ -68,17 +65,18 @@ class ModernCard(BoxLayout):
 
 class ModernTextInput(TextInput):
     """Modern styled text input"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.background_color = COLORS['input_background']
-        self.foreground_color = COLORS['text_primary']
-        self.cursor_color = COLORS['primary']
-        self.selection_color = COLORS['primary'][:3] + [0.3]
+        self.background_color = COLORS["input_background"]
+        self.foreground_color = COLORS["text_primary"]
+        self.cursor_color = COLORS["primary"]
+        self.selection_color = COLORS["primary"][:3] + [0.3]
         self.padding = [dp(15), dp(12)]
         self.font_size = sp(16)
 
         with self.canvas.before:
-            Color(*COLORS['border'])
+            Color(*COLORS["border"])
             self.border_line = Line(width=1)
 
         self.bind(pos=self.update_border, size=self.update_border)
@@ -90,49 +88,51 @@ class ModernTextInput(TextInput):
     def on_focus_change(self, instance, focus):
         with self.canvas.before:
             if focus:
-                Color(*COLORS['primary'])
+                Color(*COLORS["primary"])
             else:
-                Color(*COLORS['border'])
+                Color(*COLORS["border"])
             self.border_line = Line(width=2 if focus else 1)
             self.border_line.rounded_rectangle = (*self.pos, *self.size, dp(8))
 
 
 class SimpleModernButton(Button):
     """Ultra-simple modern button that always works"""
-    def __init__(self, button_type='primary', **kwargs):
+
+    def __init__(self, button_type="primary", **kwargs):
         super().__init__(**kwargs)
 
         color_map = {
-            'primary': COLORS['primary'],
-            'success': COLORS['success'],
-            'danger': COLORS['danger'],
-            'secondary': COLORS['border']
+            "primary": COLORS["primary"],
+            "success": COLORS["success"],
+            "danger": COLORS["danger"],
+            "secondary": COLORS["border"],
         }
 
         # Simple approach - just use background_color
-        self.background_normal = ''
-        self.background_down = ''
-        self.color = COLORS['text_primary']
+        self.background_normal = ""
+        self.background_down = ""
+        self.color = COLORS["text_primary"]
         self.font_size = sp(16)
         self.bold = True
 
         # Set the background color directly
-        self.background_color = color_map.get(button_type, COLORS['primary'])
+        self.background_color = color_map.get(button_type, COLORS["primary"])
 
 
 class ModernButton(SimpleModernButton):
     """Modern styled button with canvas rendering"""
-    def __init__(self, button_type='primary', **kwargs):
+
+    def __init__(self, button_type="primary", **kwargs):
         super().__init__(button_type, **kwargs)
 
         # Store base color for canvas rendering
         color_map = {
-            'primary': COLORS['primary'],
-            'success': COLORS['success'],
-            'danger': COLORS['danger'],
-            'secondary': COLORS['border']
+            "primary": COLORS["primary"],
+            "success": COLORS["success"],
+            "danger": COLORS["danger"],
+            "secondary": COLORS["border"],
         }
-        self.base_color = color_map.get(button_type, COLORS['primary'])
+        self.base_color = color_map.get(button_type, COLORS["primary"])
 
         # Try canvas rendering, fallback to background_color
         try:
@@ -140,6 +140,7 @@ class ModernButton(SimpleModernButton):
             self.bind(state=self.update_canvas)
 
             from kivy.clock import Clock
+
             Clock.schedule_once(self.update_canvas, 0.1)
         except Exception:
             # If canvas fails, keep the simple background_color
@@ -153,18 +154,17 @@ class ModernButton(SimpleModernButton):
 
             self.canvas.before.clear()
             with self.canvas.before:
-                if self.state == 'down':
-                    pressed_color = ([c * 0.8 for c in self.base_color[:3]] +
-                                     [self.base_color[3]])
+                if self.state == "down":
+                    pressed_color = [c * 0.8 for c in self.base_color[:3]] + [
+                        self.base_color[3]
+                    ]
                     Color(*pressed_color)
                     self.background_color = pressed_color
                 else:
                     Color(*self.base_color)
                     self.background_color = self.base_color
                 self.bg_rect = RoundedRectangle(
-                    pos=(self.x, self.y),
-                    size=(self.width, self.height),
-                    radius=[dp(8)]
+                    pos=(self.x, self.y), size=(self.width, self.height), radius=[dp(8)]
                 )
         except Exception:
             # Canvas failed, ensure background_color is set
@@ -173,52 +173,55 @@ class ModernButton(SimpleModernButton):
 
 class ModernLabel(Label):
     """Modern styled label"""
-    def __init__(self, label_type='primary', **kwargs):
+
+    def __init__(self, label_type="primary", **kwargs):
         super().__init__(**kwargs)
 
-        if label_type == 'title':
-            self.color = COLORS['text_primary']
+        if label_type == "title":
+            self.color = COLORS["text_primary"]
             self.font_size = sp(24)
             self.bold = True
-        elif label_type == 'subtitle':
-            self.color = COLORS['text_primary']
+        elif label_type == "subtitle":
+            self.color = COLORS["text_primary"]
             self.font_size = sp(18)
             self.bold = True
-        elif label_type == 'secondary':
-            self.color = COLORS['text_secondary']
+        elif label_type == "secondary":
+            self.color = COLORS["text_secondary"]
             self.font_size = sp(14)
         else:  # primary
-            self.color = COLORS['text_primary']
+            self.color = COLORS["text_primary"]
             self.font_size = sp(16)
 
 
 class ModernSpinner(Spinner):
     """Modern styled spinner"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.background_normal = ''
-        self.background_down = ''
-        self.background_color = COLORS['input_background']
-        self.color = COLORS['text_primary']
+        self.background_normal = ""
+        self.background_down = ""
+        self.background_color = COLORS["input_background"]
+        self.color = COLORS["text_primary"]
         self.font_size = sp(16)
-        self.halign = 'left'
+        self.halign = "left"
         self.text_size = (None, None)
         self.padding = [dp(15), dp(12)]
 
         # Set background and border
         self.canvas.before.clear()
         with self.canvas.before:
-            Color(*COLORS['input_background'])
+            Color(*COLORS["input_background"])
             self.bg_rect = RoundedRectangle(
                 pos=self.pos, size=self.size, radius=[dp(8)]
             )
-            Color(*COLORS['border'])
+            Color(*COLORS["border"])
             self.border_line = Line(width=1)
 
         self.bind(pos=self.update_canvas, size=self.update_canvas)
         self.bind(text_size=self.update_text_size)
         # Schedule canvas update after widget is built
         from kivy.clock import Clock
+
         Clock.schedule_once(lambda dt: self.update_canvas(), 0.1)
 
     def update_canvas(self, *args):
@@ -227,16 +230,18 @@ class ModernSpinner(Spinner):
             return
         self.canvas.before.clear()
         with self.canvas.before:
-            Color(*COLORS['input_background'])
+            Color(*COLORS["input_background"])
             self.bg_rect = RoundedRectangle(
-                pos=(self.x, self.y),
-                size=(self.width, self.height),
-                radius=[dp(8)]
+                pos=(self.x, self.y), size=(self.width, self.height), radius=[dp(8)]
             )
-            Color(*COLORS['border'])
+            Color(*COLORS["border"])
             self.border_line = Line(width=1)
             self.border_line.rounded_rectangle = (
-                self.x, self.y, self.width, self.height, dp(8)
+                self.x,
+                self.y,
+                self.width,
+                self.height,
+                dp(8),
             )
 
     def update_text_size(self, *args):
@@ -246,11 +251,12 @@ class ModernSpinner(Spinner):
 
 class ModernToggleButton(ToggleButton):
     """Modern styled toggle button with clear selection state"""
+
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.background_normal = ''
-        self.background_down = ''
-        self.color = COLORS['text_primary']
+        self.background_normal = ""
+        self.background_down = ""
+        self.color = COLORS["text_primary"]
         self.font_size = sp(16)
         self.bold = True
 
@@ -261,16 +267,17 @@ class ModernToggleButton(ToggleButton):
         self.bind(state=self.update_canvas)
         # Schedule canvas update after widget is built
         from kivy.clock import Clock
+
         Clock.schedule_once(self.update_canvas, 0.1)
 
     def update_colors(self):
         """Update colors based on toggle state"""
-        if self.state == 'down':
+        if self.state == "down":
             # Selected state - bright blue
-            self.background_color = COLORS['primary']
+            self.background_color = COLORS["primary"]
         else:
             # Unselected state - dark background
-            self.background_color = COLORS['input_background']
+            self.background_color = COLORS["input_background"]
 
     def update_canvas(self, *args):
         """Update canvas and background color"""
@@ -285,22 +292,24 @@ class ModernToggleButton(ToggleButton):
             self.canvas.before.clear()
             with self.canvas.before:
                 # Background color based on state
-                if self.state == 'down':
-                    Color(*COLORS['primary'])
+                if self.state == "down":
+                    Color(*COLORS["primary"])
                 else:
-                    Color(*COLORS['input_background'])
+                    Color(*COLORS["input_background"])
 
                 self.bg_rect = RoundedRectangle(
-                    pos=(self.x, self.y),
-                    size=(self.width, self.height),
-                    radius=[dp(8)]
+                    pos=(self.x, self.y), size=(self.width, self.height), radius=[dp(8)]
                 )
 
                 # Border
-                Color(*COLORS['border'])
+                Color(*COLORS["border"])
                 self.border_rect = Line(width=1)
                 self.border_rect.rounded_rectangle = (
-                    self.x, self.y, self.width, self.height, dp(8)
+                    self.x,
+                    self.y,
+                    self.width,
+                    self.height,
+                    dp(8),
                 )
         except Exception:
             # Canvas failed, background_color is already set
@@ -312,12 +321,12 @@ class ModernExpenseToggle(ModernToggleButton):
 
     def update_colors(self):
         """Update colors with expense-specific theme"""
-        if self.state == 'down':
+        if self.state == "down":
             # Selected expense - red/danger color
-            self.background_color = COLORS['danger']
+            self.background_color = COLORS["danger"]
         else:
             # Unselected state - dark background
-            self.background_color = COLORS['input_background']
+            self.background_color = COLORS["input_background"]
 
     def update_canvas(self, *args):
         """Update canvas with expense colors"""
@@ -327,21 +336,23 @@ class ModernExpenseToggle(ModernToggleButton):
         try:
             self.canvas.before.clear()
             with self.canvas.before:
-                if self.state == 'down':
-                    Color(*COLORS['danger'])
+                if self.state == "down":
+                    Color(*COLORS["danger"])
                 else:
-                    Color(*COLORS['input_background'])
+                    Color(*COLORS["input_background"])
 
                 self.bg_rect = RoundedRectangle(
-                    pos=(self.x, self.y),
-                    size=(self.width, self.height),
-                    radius=[dp(8)]
+                    pos=(self.x, self.y), size=(self.width, self.height), radius=[dp(8)]
                 )
 
-                Color(*COLORS['border'])
+                Color(*COLORS["border"])
                 self.border_rect = Line(width=1)
                 self.border_rect.rounded_rectangle = (
-                    self.x, self.y, self.width, self.height, dp(8)
+                    self.x,
+                    self.y,
+                    self.width,
+                    self.height,
+                    dp(8),
                 )
         except Exception:
             pass
@@ -352,12 +363,12 @@ class ModernIncomeToggle(ModernToggleButton):
 
     def update_colors(self):
         """Update colors with income-specific theme"""
-        if self.state == 'down':
+        if self.state == "down":
             # Selected income - green/success color
-            self.background_color = COLORS['success']
+            self.background_color = COLORS["success"]
         else:
             # Unselected state - dark background
-            self.background_color = COLORS['input_background']
+            self.background_color = COLORS["input_background"]
 
     def update_canvas(self, *args):
         """Update canvas with income colors"""
@@ -367,21 +378,23 @@ class ModernIncomeToggle(ModernToggleButton):
         try:
             self.canvas.before.clear()
             with self.canvas.before:
-                if self.state == 'down':
-                    Color(*COLORS['success'])
+                if self.state == "down":
+                    Color(*COLORS["success"])
                 else:
-                    Color(*COLORS['input_background'])
+                    Color(*COLORS["input_background"])
 
                 self.bg_rect = RoundedRectangle(
-                    pos=(self.x, self.y),
-                    size=(self.width, self.height),
-                    radius=[dp(8)]
+                    pos=(self.x, self.y), size=(self.width, self.height), radius=[dp(8)]
                 )
 
-                Color(*COLORS['border'])
+                Color(*COLORS["border"])
                 self.border_rect = Line(width=1)
                 self.border_rect.rounded_rectangle = (
-                    self.x, self.y, self.width, self.height, dp(8)
+                    self.x,
+                    self.y,
+                    self.width,
+                    self.height,
+                    dp(8),
                 )
         except Exception:
             pass
@@ -390,83 +403,85 @@ class ModernIncomeToggle(ModernToggleButton):
 class DatePickerWidget(BoxLayout):
     def __init__(self, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = 'horizontal'
+        self.orientation = "horizontal"
         self.selected_date = datetime.now().date()
 
         # Button que muestra la fecha seleccionada
         self.date_button = ModernButton(
-            text=self.selected_date.strftime('%d/%m/%Y'),
+            text=self.selected_date.strftime("%d/%m/%Y"),
             size_hint_x=0.75,
-            button_type='secondary'
+            button_type="secondary",
         )
         self.date_button.bind(on_press=self.open_date_picker)
         self.add_widget(self.date_button)
 
         # Button para fecha de hoy
-        today_button = ModernButton(
-            text='HOY',
-            size_hint_x=0.25,
-            button_type='primary'
-        )
+        today_button = ModernButton(text="HOY", size_hint_x=0.25, button_type="primary")
         today_button.bind(on_press=self.set_today)
         self.add_widget(today_button)
 
     def set_today(self, instance):
         """Establecer la fecha de hoy"""
         self.selected_date = datetime.now().date()
-        self.date_button.text = self.selected_date.strftime('%d/%m/%Y')
+        self.date_button.text = self.selected_date.strftime("%d/%m/%Y")
 
     def open_date_picker(self, instance):
         """Abrir el selector de fecha"""
-        content = BoxLayout(orientation='vertical', spacing=dp(10),
-                            padding=dp(10))
+        content = BoxLayout(orientation="vertical", spacing=dp(10), padding=dp(10))
 
         # Título
         title_label = ModernLabel(
-            text='Seleccionar Fecha',
+            text="Seleccionar Fecha",
             size_hint_y=None,
             height=dp(40),
-            label_type='subtitle'
+            label_type="subtitle",
         )
         content.add_widget(title_label)
 
         # Controles de navegación del mes/año
-        nav_layout = BoxLayout(orientation='horizontal', size_hint_y=None,
-                               height=dp(50))
+        nav_layout = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(50)
+        )
 
         # Botón mes anterior
-        prev_month_btn = ModernButton(text='<', size_hint_x=0.2,
-                                      button_type='secondary')
+        prev_month_btn = ModernButton(
+            text="<", size_hint_x=0.2, button_type="secondary"
+        )
         prev_month_btn.bind(on_press=lambda x: self.change_month(-1))
         nav_layout.add_widget(prev_month_btn)
 
         # Spinner para mes
         months = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre',
-            'Diciembre'
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
         ]
         self.month_spinner = ModernSpinner(
-            text=months[self.selected_date.month - 1],
-            values=months,
-            size_hint_x=0.4
+            text=months[self.selected_date.month - 1], values=months, size_hint_x=0.4
         )
         nav_layout.add_widget(self.month_spinner)
 
         # Spinner para año
         current_year = self.selected_date.year
-        years = [str(year) for year in range(current_year - 5,
-                                             current_year + 2)]
+        years = [str(year) for year in range(current_year - 5, current_year + 2)]
         self.year_spinner = ModernSpinner(
-            text=str(self.selected_date.year),
-            values=years,
-            size_hint_x=0.2
+            text=str(self.selected_date.year), values=years, size_hint_x=0.2
         )
         nav_layout.add_widget(self.year_spinner)
 
         # Botón mes siguiente
-        next_month_btn = ModernButton(text='>', size_hint_x=0.2,
-                                      button_type='secondary')
+        next_month_btn = ModernButton(
+            text=">", size_hint_x=0.2, button_type="secondary"
+        )
         next_month_btn.bind(on_press=lambda x: self.change_month(1))
         nav_layout.add_widget(next_month_btn)
 
@@ -476,13 +491,10 @@ class DatePickerWidget(BoxLayout):
         self.calendar_grid = GridLayout(cols=7, spacing=dp(2))
 
         # Días de la semana
-        weekdays = ['L', 'M', 'X', 'J', 'V', 'S', 'D']
+        weekdays = ["L", "M", "X", "J", "V", "S", "D"]
         for day in weekdays:
             label = ModernLabel(
-                text=day,
-                size_hint_y=None,
-                height=dp(30),
-                label_type='secondary'
+                text=day, size_hint_y=None, height=dp(30), label_type="secondary"
             )
             self.calendar_grid.add_widget(label)
 
@@ -491,23 +503,14 @@ class DatePickerWidget(BoxLayout):
 
         # Botones de acción
         button_layout = BoxLayout(
-            orientation='horizontal',
-            size_hint_y=None,
-            height=dp(50),
-            spacing=dp(10)
+            orientation="horizontal", size_hint_y=None, height=dp(50), spacing=dp(10)
         )
 
         cancel_button = ModernButton(
-            text='Cancelar',
-            size_hint_x=0.5,
-            button_type='danger'
+            text="Cancelar", size_hint_x=0.5, button_type="danger"
         )
 
-        ok_button = ModernButton(
-            text='Aceptar',
-            size_hint_x=0.5,
-            button_type='success'
-        )
+        ok_button = ModernButton(text="Aceptar", size_hint_x=0.5, button_type="success")
 
         button_layout.add_widget(cancel_button)
         button_layout.add_widget(ok_button)
@@ -515,10 +518,10 @@ class DatePickerWidget(BoxLayout):
 
         # Crear popup
         self.date_popup = Popup(
-            title='Seleccionar Fecha',
+            title="Seleccionar Fecha",
             content=content,
             size_hint=(0.9, 0.8),
-            auto_dismiss=False
+            auto_dismiss=False,
         )
 
         # Bind events
@@ -533,9 +536,18 @@ class DatePickerWidget(BoxLayout):
         """Cambiar mes"""
         # Convertir nombres de meses en español
         months_es = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre',
-            'Diciembre'
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
         ]
         current_month = months_es.index(self.month_spinner.text) + 1
         current_year = int(self.year_spinner.text)
@@ -561,16 +573,26 @@ class DatePickerWidget(BoxLayout):
     def update_calendar_grid(self):
         """Actualizar el grid del calendario"""
         # Limpiar días anteriores
-        children_to_remove = [child for child in self.calendar_grid.children
-                              if isinstance(child, Button)]
+        children_to_remove = [
+            child for child in self.calendar_grid.children if isinstance(child, Button)
+        ]
         for child in children_to_remove:
             self.calendar_grid.remove_widget(child)
 
         # Obtener mes y año seleccionados
         months_es = [
-            'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-            'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre',
-            'Diciembre'
+            "Enero",
+            "Febrero",
+            "Marzo",
+            "Abril",
+            "Mayo",
+            "Junio",
+            "Julio",
+            "Agosto",
+            "Septiembre",
+            "Octubre",
+            "Noviembre",
+            "Diciembre",
         ]
         month = months_es.index(self.month_spinner.text) + 1
         year = int(self.year_spinner.text)
@@ -584,7 +606,7 @@ class DatePickerWidget(BoxLayout):
 
         # Agregar días vacíos al inicio
         for _ in range(start_weekday):
-            empty_label = Label(text='')
+            empty_label = Label(text="")
             self.calendar_grid.add_widget(empty_label)
 
         # Agregar días del mes
@@ -592,14 +614,10 @@ class DatePickerWidget(BoxLayout):
             day_date = date(year, month, day)
 
             # Determinar el tipo de botón según si está seleccionado
-            button_type = ('primary' if day_date == self.selected_date
-                           else 'secondary')
+            button_type = "primary" if day_date == self.selected_date else "secondary"
 
             day_button = ModernButton(
-                text=str(day),
-                size_hint_y=None,
-                height=dp(40),
-                button_type=button_type
+                text=str(day), size_hint_y=None, height=dp(40), button_type=button_type
             )
 
             day_button.bind(on_press=lambda x, d=day_date: self.select_date(d))
@@ -612,7 +630,7 @@ class DatePickerWidget(BoxLayout):
 
     def confirm_date(self, instance):
         """Confirmar la fecha seleccionada"""
-        self.date_button.text = self.selected_date.strftime('%d/%m/%Y')
+        self.date_button.text = self.selected_date.strftime("%d/%m/%Y")
         self.date_popup.dismiss()
 
     def get_date(self):
@@ -621,57 +639,73 @@ class DatePickerWidget(BoxLayout):
 
 
 class ExpenseForm(BoxLayout):
-    def __init__(self, **kwargs):
+    def __init__(self, categories=None, client=None, **kwargs):
         super().__init__(**kwargs)
-        self.orientation = 'vertical'
-        self.spacing = dp(20)
+        # Use the client passed from the app
+        self.client = client or ExpensyClient()
+        
+        # Store categories in memory
+        self.categories = categories or [
+            {"id": 1, "name": "Hogar"},
+            {"id": 2, "name": "Comidas y bebidas"},
+            {"id": 3, "name": "Salud y cuidado personal"},
+            {"id": 4, "name": "Supermercado"},
+        ]
+        # Extract category names for the spinner
+        self.category_names = [cat["name"] for cat in self.categories]
+        # Create a mapping from name to id for later use
+        self.category_name_to_id = {cat["name"]: cat["id"] for cat in self.categories}
+        self.orientation = "vertical"
+        self.spacing = dp(2)
         self.padding = dp(20)
         # Establecer el fondo de la app
         with self.canvas.before:
-            Color(*COLORS['background'])
+            Color(*COLORS["background"])
             self.rect = RoundedRectangle(pos=self.pos, size=self.size)
         self.bind(pos=self.update_bg, size=self.update_bg)
 
         # Título
         title = ModernLabel(
-            text='$ EXPENSY',
+            text="$ EXPENSY",
             size_hint_y=None,
             height=dp(60),
-            label_type='title',
-            halign='center'
+            label_type="title",
+            halign="center",
         )
         title.text_size = (None, None)
         self.add_widget(title)
 
         subtitle = ModernLabel(
-            text='Gestiona tus gastos e ingresos',
+            text="Gestiona tus gastos e ingresos",
             size_hint_y=None,
             height=dp(30),
-            label_type='secondary',
-            halign='center'
+            label_type="secondary",
+            halign="center",
         )
         subtitle.text_size = (None, None)
         self.add_widget(subtitle)
 
         # Card container para el formulario
-        form_card = ModernCard(orientation='vertical')
+        form_card = ModernCard(orientation="vertical")
         # Crear scroll view para el formulario
         scroll = ScrollView()
         form_layout = BoxLayout(
-            orientation='vertical',
+            orientation="vertical",
             spacing=dp(20),
             size_hint_y=None,
-            padding=[0, dp(10), 0, dp(10)]
+            padding=[0, dp(10), 0, dp(10)],
         )
-        form_layout.bind(minimum_height=form_layout.setter('height'))
+        form_layout.bind(minimum_height=form_layout.setter("height"))
 
         # Campo Descripción
-        desc_section = BoxLayout(orientation='vertical', spacing=dp(8),
-                                 size_hint_y=None, height=dp(80))
+        desc_section = BoxLayout(
+            orientation="vertical", spacing=dp(8), size_hint_y=None, height=dp(80)
+        )
         # Contenedor para alineación izquierda
-        desc_label_container = BoxLayout(orientation='horizontal',
-                                         size_hint_y=None, height=dp(25))
-        desc_label = ModernLabel(text='Descripción', label_type='primary')
+        desc_label_container = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(25)
+        )
+        desc_label = ModernLabel(text="Descripción", label_type="primary")
         desc_label.size_hint_x = None
         desc_label.width = dp(100)
         desc_label.size_hint_y = None
@@ -685,18 +719,20 @@ class ExpenseForm(BoxLayout):
             multiline=False,
             size_hint_y=None,
             height=dp(50),
-            hint_text='Describe el gasto o ingreso'
+            hint_text="Describe el gasto o ingreso",
         )
         desc_section.add_widget(self.description_input)
         form_layout.add_widget(desc_section)
 
         # Tipo: Gasto o Ingreso
-        type_section = BoxLayout(orientation='vertical', spacing=dp(8),
-                                 size_hint_y=None, height=dp(80))
+        type_section = BoxLayout(
+            orientation="vertical", spacing=dp(8), size_hint_y=None, height=dp(80)
+        )
         # Contenedor para alineación izquierda
-        type_label_container = BoxLayout(orientation='horizontal',
-                                         size_hint_y=None, height=dp(25))
-        type_label = ModernLabel(text='Tipo', label_type='primary')
+        type_label_container = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(25)
+        )
+        type_label = ModernLabel(text="Tipo", label_type="primary")
         type_label.size_hint_x = None
         type_label.width = dp(60)
         type_label.size_hint_y = None
@@ -706,20 +742,16 @@ class ExpenseForm(BoxLayout):
         type_label_container.add_widget(BoxLayout())  # Spacer
         type_section.add_widget(type_label_container)
 
-        type_layout = BoxLayout(orientation='horizontal', spacing=dp(10),
-                                size_hint_y=None, height=dp(50))
+        type_layout = BoxLayout(
+            orientation="horizontal", spacing=dp(10), size_hint_y=None, height=dp(50)
+        )
 
         # Crear botones de toggle personalizados
         self.expense_toggle = ModernExpenseToggle(
-            text='Gasto',
-            group='type',
-            state='down',
-            size_hint_x=0.5
+            text="Gasto", group="type", state="down", size_hint_x=0.5
         )
         self.income_toggle = ModernIncomeToggle(
-            text='Ingreso',
-            group='type',
-            size_hint_x=0.5
+            text="Ingreso", group="type", size_hint_x=0.5
         )
 
         type_layout.add_widget(self.expense_toggle)
@@ -728,12 +760,14 @@ class ExpenseForm(BoxLayout):
         form_layout.add_widget(type_section)
 
         # Campo Monto
-        amount_section = BoxLayout(orientation='vertical', spacing=dp(8),
-                                   size_hint_y=None, height=dp(80))
+        amount_section = BoxLayout(
+            orientation="vertical", spacing=dp(8), size_hint_y=None, height=dp(80)
+        )
         # Contenedor para alineación izquierda
-        amount_label_container = BoxLayout(orientation='horizontal',
-                                           size_hint_y=None, height=dp(25))
-        amount_label = ModernLabel(text='Monto', label_type='primary')
+        amount_label_container = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(25)
+        )
+        amount_label = ModernLabel(text="Monto", label_type="primary")
         amount_label.size_hint_x = None
         amount_label.width = dp(70)
         amount_label.size_hint_y = None
@@ -747,19 +781,21 @@ class ExpenseForm(BoxLayout):
             multiline=False,
             size_hint_y=None,
             height=dp(50),
-            input_filter='float',
-            hint_text='0.00'
+            input_filter="float",
+            hint_text="0.00",
         )
         amount_section.add_widget(self.amount_input)
         form_layout.add_widget(amount_section)
 
         # Campo Fecha
-        date_section = BoxLayout(orientation='vertical', spacing=dp(8),
-                                 size_hint_y=None, height=dp(80))
+        date_section = BoxLayout(
+            orientation="vertical", spacing=dp(8), size_hint_y=None, height=dp(80)
+        )
         # Contenedor para alineación izquierda
-        date_label_container = BoxLayout(orientation='horizontal',
-                                         size_hint_y=None, height=dp(25))
-        date_label = ModernLabel(text='Fecha', label_type='primary')
+        date_label_container = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(25)
+        )
+        date_label = ModernLabel(text="Fecha", label_type="primary")
         date_label.size_hint_x = None
         date_label.width = dp(70)
         date_label.size_hint_y = None
@@ -774,12 +810,14 @@ class ExpenseForm(BoxLayout):
         form_layout.add_widget(date_section)
 
         # Campo Categoría
-        category_section = BoxLayout(orientation='vertical', spacing=dp(8),
-                                     size_hint_y=None, height=dp(80))
+        category_section = BoxLayout(
+            orientation="vertical", spacing=dp(8), size_hint_y=None, height=dp(80)
+        )
         # Contenedor para alineación izquierda
-        category_label_container = BoxLayout(orientation='horizontal',
-                                             size_hint_y=None, height=dp(25))
-        category_label = ModernLabel(text='Categoría', label_type='primary')
+        category_label_container = BoxLayout(
+            orientation="horizontal", size_hint_y=None, height=dp(25)
+        )
+        category_label = ModernLabel(text="Categoría", label_type="primary")
         category_label.size_hint_x = None
         category_label.width = dp(90)
         category_label.size_hint_y = None
@@ -790,10 +828,10 @@ class ExpenseForm(BoxLayout):
         category_section.add_widget(category_label_container)
 
         self.category_spinner = ModernSpinner(
-            text=CATEGORIES[0],
-            values=CATEGORIES,
+            text=self.category_names[0],
+            values=self.category_names,
             size_hint_y=None,
-            height=dp(50)
+            height=dp(50),
         )
         category_section.add_widget(self.category_spinner)
         form_layout.add_widget(category_section)
@@ -804,23 +842,16 @@ class ExpenseForm(BoxLayout):
 
         # Botones
         button_layout = BoxLayout(
-            orientation='horizontal',
-            size_hint_y=None,
-            height=dp(60),
-            spacing=dp(15)
+            orientation="horizontal", size_hint_y=None, height=dp(60), spacing=dp(15)
         )
 
         save_button = ModernButton(
-            text='GUARDAR',
-            size_hint_x=0.6,
-            button_type='success'
+            text="GUARDAR", size_hint_x=0.6, button_type="success"
         )
         save_button.bind(on_press=self.save_record)
 
         clear_button = ModernButton(
-            text='LIMPIAR',
-            size_hint_x=0.4,
-            button_type='secondary'
+            text="LIMPIAR", size_hint_x=0.4, button_type="secondary"
         )
         clear_button.bind(on_press=self.clear_form)
 
@@ -834,7 +865,7 @@ class ExpenseForm(BoxLayout):
         self.rect.size = self.size
 
     def save_record(self, instance):
-        # Validar campos obligatorios
+        # Validate required fields
         if not self.description_input.text.strip():
             self.show_popup("Error", "La descripción es obligatoria")
             return
@@ -852,78 +883,58 @@ class ExpenseForm(BoxLayout):
             self.show_popup("Error", "El monto debe ser un número válido")
             return
 
-        # Determinar el tipo (gasto o ingreso)
-        transaction_type = ("Gasto" if self.expense_toggle.state == 'down'
-                            else "Ingreso")
-
-        # Obtener la fecha seleccionada
+        # Get selected date
         selected_date = self.date_picker.get_date()
 
-        # Crear el registro
-        record = {
-            'description': self.description_input.text.strip(),
-            'amount': amount,
-            'type': transaction_type,
-            'date': selected_date.strftime('%d/%m/%Y'),
-            'day': selected_date.day,
-            'month': selected_date.month,
-            'year': selected_date.year,
-            'category': self.category_spinner.text,
-            'timestamp': datetime.now().isoformat()
+        # Get category ID from the selected category name
+        selected_category_name = self.category_spinner.text
+        category_id = self.category_name_to_id.get(selected_category_name, 1)
+
+        # Prepare record data for the API
+        record_data = {
+            "description": self.description_input.text.strip(),
+            "amount": amount,
+            "source": SOURCE_FIELD,
+            "date": selected_date.strftime("%Y-%m-%d"),
+            "category": category_id
         }
 
-        # Por ahora solo mostrar el registro guardado
-        # En futuras iteraciones se enviará a un endpoint
-        message = f"""Registro guardado exitosamente:
-
-Descripción: {record['description']}
-Monto: ${record['amount']:.2f}
-Tipo: {record['type']}
-Fecha: {record['date']}
-Categoría: {record['category']}"""
-
-        self.show_popup("Éxito", message)
-        self.clear_form(None)
-
-        # Guardar en archivo local (temporal)
-        self.save_to_file(record)
-
-    def save_to_file(self, record):
-        """Guarda el registro en un archivo JSON local (temporal)"""
         try:
-            # Intentar cargar registros existentes
-            try:
-                with open('expenses.json', 'r', encoding='utf-8') as f:
-                    records = json.load(f)
-            except FileNotFoundError:
-                records = []
+            # Create record using ExpensyClient
+            self.client.create_record(record_data)
+            
+            # Show success message
+            message = f"""Registro guardado exitosamente:
 
-            # Agregar nuevo registro
-            records.append(record)
+Descripción: {record_data['description']}
+Monto: ${record_data['amount']:.2f}
+Fecha: {selected_date.strftime("%d/%m/%Y")}
+Categoría: {selected_category_name}"""
 
-            # Guardar todos los registros
-            with open('expenses.json', 'w', encoding='utf-8') as f:
-                json.dump(records, f, ensure_ascii=False, indent=2)
-
+            self.show_popup("Éxito", message)
+            self.clear_form(None)
+            
         except Exception as e:
-            print(f"Error al guardar en archivo: {e}")
+            # Show error message
+            error_message = f"Error al guardar el registro: {str(e)}"
+            self.show_popup("Error", error_message)
 
     def clear_form(self, instance):
         """Limpiar todos los campos del formulario"""
-        self.description_input.text = ''
-        self.amount_input.text = ''
-        self.expense_toggle.state = 'down'
-        self.income_toggle.state = 'normal'
+        self.description_input.text = ""
+        self.amount_input.text = ""
+        self.expense_toggle.state = "down"
+        self.income_toggle.state = "normal"
 
         # Restablecer fecha a hoy
         self.date_picker.set_today(None)
 
         # Restablecer categoría
-        self.category_spinner.text = CATEGORIES[0]
+        self.category_spinner.text = self.category_names[0]
 
     def show_popup(self, title, message):
         """Mostrar popup con mensaje moderno"""
-        content = ModernCard(orientation='vertical')
+        content = ModernCard(orientation="vertical")
 
         # Icono según el tipo
         if "éxito" in title.lower():
@@ -935,10 +946,10 @@ Categoría: {record['category']}"""
 
         title_with_icon = ModernLabel(
             text=f"{icon} {title}",
-            label_type='subtitle',
+            label_type="subtitle",
             size_hint_y=None,
             height=dp(40),
-            halign='center'
+            halign="center",
         )
         title_with_icon.text_size = (dp(300), None)
         content.add_widget(title_with_icon)
@@ -946,26 +957,23 @@ Categoría: {record['category']}"""
         label = ModernLabel(
             text=message,
             text_size=(dp(300), None),
-            halign='center',
-            valign='middle',
-            label_type='primary'
+            halign="center",
+            valign="middle",
+            label_type="primary",
         )
         content.add_widget(label)
 
         close_button = ModernButton(
-            text='CERRAR',
-            size_hint_y=None,
-            height=dp(50),
-            button_type='primary'
+            text="CERRAR", size_hint_y=None, height=dp(50), button_type="primary"
         )
         content.add_widget(close_button)
 
         popup = Popup(
-            title='',
+            title="",
             content=content,
             size_hint=(0.85, 0.6),
             auto_dismiss=False,
-            separator_height=0
+            separator_height=0,
         )
 
         close_button.bind(on_press=popup.dismiss)
@@ -973,10 +981,36 @@ Categoría: {record['category']}"""
 
 
 class ExpensyApp(App):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.categories = []
+        self.categories_loaded = False
+        # Initialize ExpensyClient once for the entire app
+        self.client = ExpensyClient()
+
+    def load_categories(self):
+        """Load categories from the REST API"""
+        try:
+            self.categories = self.client.get_categories()
+            self.categories_loaded = True
+            print(f"Loaded {len(self.categories)} categories from API")
+        except Exception as e:
+            print(f"Error loading categories: {e}")
+            # Fallback to default categories
+            self.categories = [
+                {"id": 1, "name": "Hogar"},
+                {"id": 2, "name": "Comidas y bebidas"},
+                {"id": 3, "name": "Salud y cuidado personal"},
+                {"id": 4, "name": "Supermercado"},
+            ]
+            self.categories_loaded = True
+
     def build(self):
-        self.title = 'Expensy - Gestor de Gastos e Ingresos'
-        return ExpenseForm()
+        self.title = "Expensy - Gestor de Gastos e Ingresos"
+        # Load categories before building the UI
+        self.load_categories()
+        return ExpenseForm(categories=self.categories, client=self.client)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     ExpensyApp().run()
