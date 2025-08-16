@@ -1,13 +1,15 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ArrowLeft, Plus, Minus, ChevronDown } from "lucide-react"
+import { Alert, AlertDescription } from "@/components/ui/alert"
+import { ArrowLeft, Plus, Minus, ChevronDown, AlertCircle, CheckCircle } from "lucide-react"
+import { useTransactionForm } from "@/hooks/use-transaction-form"
 
 interface NewTransactionPageProps {
   onBack: () => void
@@ -20,7 +22,15 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
   const [date, setDate] = useState("")
   const [category, setCategory] = useState("")
 
-  const categories = ["Hogar", "Salud y bienestar", "Ocio", "Supermercado"]
+  const {
+    categories,
+    isLoading,
+    error,
+    isSuccess,
+    createTransaction,
+    clearError,
+    clearSuccess,
+  } = useTransactionForm()
 
   const handleTransactionTypeChange = (type: "expense" | "income") => {
     setTransactionType(type)
@@ -65,30 +75,42 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
     setTransactionType("expense")
   }
 
-  const handleSave = () => {
-    // Here you would typically save the transaction
-    console.log("[v0] Saving transaction:", {
+  const handleSave = async () => {
+    const success = await createTransaction({
       description,
-      type: transactionType,
-      amount: Number.parseFloat(amount),
+      amount,
       date,
       category,
+      transactionType,
     })
-    // For now, just go back to dashboard
-    onBack()
+    
+    if (success) {
+      // Clear form and show success message
+      handleClear()
+      setTimeout(() => {
+        clearSuccess()
+        onBack()
+      }, 2000)
+    }
   }
 
-  const handleSaveAndSync = () => {
-    // Here you would typically save and sync the transaction
-    console.log("[v0] Saving and syncing transaction:", {
+  const handleSaveAndSync = async () => {
+    const success = await createTransaction({
       description,
-      type: transactionType,
-      amount: Number.parseFloat(amount),
+      amount,
       date,
       category,
+      transactionType,
     })
-    // For now, just go back to dashboard
-    onBack()
+    
+    if (success) {
+      // Clear form and show success message
+      handleClear()
+      setTimeout(() => {
+        clearSuccess()
+        onBack()
+      }, 2000)
+    }
   }
 
   return (
@@ -106,6 +128,33 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
       <main className="p-4 flex justify-center">
         <Card className="bg-gray-900 border-gray-800 rounded-2xl p-6 w-full max-w-md">
           <div className="space-y-6">
+            {/* Error Alert */}
+            {error && (
+              <Alert className="bg-red-900/20 border-red-800 text-red-200">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  {error}
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearError}
+                    className="ml-2 h-auto p-1 text-red-300 hover:text-red-100 hover:bg-red-800/30"
+                  >
+                    ×
+                  </Button>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {/* Success Alert */}
+            {isSuccess && (
+              <Alert className="bg-green-900/20 border-green-800 text-green-200">
+                <CheckCircle className="h-4 w-4" />
+                <AlertDescription className="text-sm">
+                  Transaction saved successfully!
+                </AlertDescription>
+              </Alert>
+            )}
             {/* Description Field */}
             <div className="space-y-2">
               <Label htmlFor="description" className="text-white text-sm font-medium">
@@ -196,16 +245,32 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
               <Label className="text-white text-sm font-medium">Categoría</Label>
               <Select value={category} onValueChange={setCategory}>
                 <SelectTrigger className="w-full bg-gray-800 border-gray-700 text-white focus:border-gray-600">
-                  <SelectValue placeholder="Selecciona una categoría" />
+                  <SelectValue placeholder={isLoading ? "Loading categories..." : "Selecciona una categoría"} />
                 </SelectTrigger>
                 <SelectContent className="bg-gray-800 border-gray-700">
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat} className="text-white hover:bg-gray-700 focus:bg-gray-700">
-                      {cat}
-                    </SelectItem>
-                  ))}
+                  {isLoading ? (
+                    <div className="p-2 text-center text-gray-400 text-sm">Loading categories...</div>
+                  ) : categories.length > 0 ? (
+                    categories.map((cat) => (
+                      <SelectItem key={cat.id} value={cat.name} className="text-white hover:bg-gray-700 focus:bg-gray-700">
+                        {cat.name}
+                      </SelectItem>
+                    ))
+                  ) : (
+                    <div className="p-2 text-center text-gray-400 text-sm">No categories available</div>
+                  )}
                 </SelectContent>
               </Select>
+              {error && categories.length === 0 && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => window.location.reload()}
+                  className="text-blue-400 hover:text-blue-300 text-xs p-0 h-auto"
+                >
+                  Retry loading categories
+                </Button>
+              )}
             </div>
 
             {/* Action Buttons */}
@@ -214,6 +279,7 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
                 variant="outline"
                 className="flex-1 bg-transparent border-gray-600 text-gray-300 hover:bg-gray-800 hover:text-white"
                 onClick={handleClear}
+                disabled={isLoading}
               >
                 Limpiar
               </Button>
@@ -221,9 +287,9 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
                 <DropdownMenuTrigger asChild>
                   <Button
                     className="flex-1 bg-blue-600 text-white hover:bg-blue-700 flex items-center justify-center gap-2"
-                    disabled={!description || !amount || !date || !category}
+                    disabled={!description || !amount || !date || !category || isLoading}
                   >
-                    Guardar
+                    {isLoading ? "Guardando..." : "Guardar"}
                     <ChevronDown className="h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -231,14 +297,16 @@ export default function NewTransactionPage({ onBack }: NewTransactionPageProps) 
                   <DropdownMenuItem
                     onClick={handleSave}
                     className="text-white hover:bg-gray-700 focus:bg-gray-700 cursor-pointer"
+                    disabled={isLoading}
                   >
-                    Guardar
+                    {isLoading ? "Guardando..." : "Guardar"}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={handleSaveAndSync}
                     className="text-white hover:bg-gray-700 focus:bg-gray-700 cursor-pointer"
+                    disabled={isLoading}
                   >
-                    Guardar y sincronizar
+                    {isLoading ? "Guardando..." : "Guardar y sincronizar"}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

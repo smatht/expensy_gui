@@ -309,20 +309,20 @@ export default function BankingApp() {
             {/* Accounts Card */}
             <Card className="bg-gray-900 border-gray-800 rounded-2xl p-6">
               {/* Accounts Header */}
-              <div className="flex items-center gap-2 mb-6">
+              <div className="flex items-center gap-2 mb-2">
                 <CreditCard className="h-5 w-5 text-white" />
-                <h1 className="text-white text-xl font-semibold">Cuentas</h1>
+                <h1 className="text-white text-xl font-semibold">Categorías</h1>
               </div>
 
               {/* Total Balance */}
-              <div className="mb-8">
-                <p className="text-gray-400 text-sm mb-2">Balance Total</p>
-                <p className="text-white text-3xl font-bold">$26,540.25</p>
+              <div className="mb-4">
+                <p className="text-gray-400 text-sm mb-2">Gasto por categoría</p>
+                <p className="text-white text-3xl font-bold">$-26,540.25</p>
               </div>
 
               {/* Your Accounts */}
               <div className="mb-8">
-                <h2 className="text-white text-lg font-medium mb-4">Tus Cuentas</h2>
+                <h2 className="text-white text-lg font-medium mb-4">Categorías relevantes</h2>
                 <div className="space-y-4">
                   {accounts.map((account, index) => (
                     <div key={index} className="flex items-center justify-between">
@@ -352,7 +352,7 @@ export default function BankingApp() {
               {/* Action Buttons */}
               <div className="mt-6">
                 <Button className="w-full bg-gray-800 text-white hover:bg-gray-700 rounded-xl py-3 flex items-center justify-center gap-2">
-                  Ver Todas las Cuentas
+                  Ver Todas las Categorías
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </div>
